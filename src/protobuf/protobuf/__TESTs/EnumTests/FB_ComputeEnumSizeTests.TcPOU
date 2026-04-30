@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_ComputeEnumSizeTests" Id="{683ff36f-99e7-434b-9cba-a18ab322ec34}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL FINAL FB_ComputeEnumSizeTests EXTENDS FB_TestSuite
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ShouldComputeByteBackedEnumSizeFromOwnStorageOnly();
+ShouldComputeWordBackedEnumSizeFromOwnStorageOnly();
+ShouldComputeDwordBackedEnumSize();
+ShouldReturnZeroForNonEnum();]]></ST>
+    </Implementation>
+    <Method Name="ShouldComputeByteBackedEnumSizeFromOwnStorageOnly" Id="{da64fc12-b350-490c-b361-69edbd60b7e3}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldComputeByteBackedEnumSizeFromOwnStorageOnly : REFERENCE TO FB_Test
+VAR
+    aValues : ARRAY[0..3] OF E_DataType := [
+        E_DataType.DATA_TYPE_HUMIDITY,
+        E_DataType.DATA_TYPE_PRESSURE,
+        E_DataType.DATA_TYPE_TEMPERATURE,
+        E_DataType.DATA_TYPE_UNKNOWN];
+    nActual : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+nActual := F_ComputeEnumSize(anyEnum:= aValues[0]);
+
+AssertEquals_UDINT(
+    Expected:= 1,
+    Actual:= nActual,
+    Message:= 'Expected BYTE backed enum size to use only the enum storage');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ShouldComputeDwordBackedEnumSize" Id="{a7e4329d-535d-4e31-b36c-498d9d4d2fa3}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldComputeDwordBackedEnumSize : REFERENCE TO FB_Test
+VAR
+    eValue : E_Status := E_Status.STATUS_ERROR;
+    nActual : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+nActual := F_ComputeEnumSize(anyEnum:= eValue);
+
+AssertEquals_UDINT(
+    Expected:= 1,
+    Actual:= nActual,
+    Message:= 'Expected DWORD backed enum size to match its varint size');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ShouldComputeWordBackedEnumSizeFromOwnStorageOnly" Id="{ede98fe7-25d7-46d6-acd0-7ead693b59d7}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldComputeWordBackedEnumSizeFromOwnStorageOnly : REFERENCE TO FB_Test
+VAR
+    aValues : ARRAY[0..1] OF E_Color := [
+        E_Color.COLOR_BLUE,
+        E_Color.COLOR_GREEN];
+    nActual : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+nActual := F_ComputeEnumSize(anyEnum:= aValues[0]);
+
+AssertEquals_UDINT(
+    Expected:= 1,
+    Actual:= nActual,
+    Message:= 'Expected WORD backed enum size to use only the enum storage');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ShouldReturnZeroForNonEnum" Id="{552ca165-3fa5-401e-8f84-4e1ab9041154}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldReturnZeroForNonEnum : REFERENCE TO FB_Test
+VAR
+    nValue : UDINT := 3;
+    nActual : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+nActual := F_ComputeEnumSize(anyEnum:= nValue);
+
+AssertEquals_UDINT(
+    Expected:= 0,
+    Actual:= nActual,
+    Message:= 'Expected non-enum input to have size 0');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

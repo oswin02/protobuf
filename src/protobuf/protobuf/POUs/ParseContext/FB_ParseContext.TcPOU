@@ -140,6 +140,8 @@ VAR_INPUT
 END_VAR
 VAR
     nTmp   : UDINT;
+	nCopySize : UDINT;
+	retVal : UDINT;
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[IF anyEnum.pValue = NULL OR anyEnum.TypeClass <> __SYSTEM.TYPE_CLASS.TYPE_ENUM THEN
@@ -148,7 +150,21 @@ END_VAR]]></Declaration>
 END_IF
 
 ReadEnum := F_ParseRawVarint32(THIS^.stCtx, nTmp);
-memcpy(anyEnum.pValue, srcAddr:= ADR(nTmp), TO_UDINT(anyEnum.diSize)); ]]></ST>
+IF FAILED(ReadEnum) THEN
+	RETURN;
+END_IF
+
+nCopySize := MIN(TO_UDINT(anyEnum.diSize), SIZEOF(nTmp));
+IF nCopySize = 0 THEN
+	ReadEnum := E_HRESULTAdsErr.INVALIDDATA;
+	RETURN;
+END_IF
+
+MEMSET(destAddr:= anyEnum.pValue, fillByte:= 16#0, n:= TO_UDINT(anyEnum.diSize));
+retVal := MEMCPY(destAddr:= anyEnum.pValue, srcAddr:= ADR(nTmp), n:= nCopySize);
+IF retVal = 0 THEN
+	ReadEnum := E_HRESULTAdsErr.INVALIDDATA;
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="ReadFixed32" Id="{8472785f-a763-4cc4-aa20-d1a39159ff5f}">

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_WriteEnumTests" Id="{bf770150-9781-4530-b2a8-fbd15059a927}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL FINAL FB_WriteEnumTests EXTENDS FB_TestSuite
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ShouldWriteByteBackedEnumFromOwnStorageOnly();
+ShouldWriteWordBackedEnumFromOwnStorageOnly();
+ShouldWriteDwordBackedEnum();
+ShouldReturnInvalidDataForNonEnum();]]></ST>
+    </Implementation>
+    <Method Name="ShouldReturnInvalidDataForNonEnum" Id="{1e3a0462-903b-40d0-9c41-c1fad4ee3845}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldReturnInvalidDataForNonEnum : REFERENCE TO FB_Test
+VAR_INST
+    fbCtx : FB_WriteContext;
+END_VAR
+VAR
+    aActualBuffer : ARRAY[0..7] OF BYTE;
+    nValue : UDINT := 3;
+    hrExpected : HRESULT := E_HRESULTAdsErr.INVALIDDATA;
+    hrActual : HRESULT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+fbCtx.FromBuffer(aActualBuffer);
+
+hrActual := fbCtx.WriteEnum(anyEnum:= nValue);
+
+AssertEquals_DINT(
+    Expected:= hrExpected,
+    Actual:= hrActual,
+    Message:= 'Expected INVALIDDATA for non-enum input');
+
+AssertEquals_UDINT(
+    Expected:= 0,
+    Actual:= fbCtx.refCtx.stState.nBufferPos,
+    Message:= 'Expected write position to stay unchanged');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ShouldWriteByteBackedEnumFromOwnStorageOnly" Id="{e40f2c6c-a4d1-458a-a246-1429dea0f06f}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldWriteByteBackedEnumFromOwnStorageOnly : REFERENCE TO FB_Test
+VAR_INST
+    fbCtx : FB_WriteContext;
+END_VAR
+VAR
+    cExpectedBuffer : ARRAY[0..7] OF BYTE := [16#03];
+    aValues : ARRAY[0..3] OF E_DataType := [
+        E_DataType.DATA_TYPE_HUMIDITY,
+        E_DataType.DATA_TYPE_PRESSURE,
+        E_DataType.DATA_TYPE_TEMPERATURE,
+        E_DataType.DATA_TYPE_UNKNOWN];
+    aActualBuffer : ARRAY[0..7] OF BYTE;
+    hrActual : HRESULT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+fbCtx.FromBuffer(aActualBuffer);
+
+hrActual := fbCtx.WriteEnum(anyEnum:= aValues[0]);
+
+AssertEquals_DINT(
+    Expected:= S_OK,
+    Actual:= hrActual,
+    Message:= 'Expected S_OK when writing BYTE backed enum');
+
+AssertArrayEquals_BYTE(
+    Expecteds:= cExpectedBuffer,
+    Actuals:= aActualBuffer,
+    Message:= 'Expected BYTE backed enum to be written as value 3 only');
+
+AssertEquals_UDINT(
+    Expected:= 1,
+    Actual:= fbCtx.refCtx.stState.nBufferPos,
+    Message:= 'Expected write position after one-byte enum value');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ShouldWriteDwordBackedEnum" Id="{f184081c-d03d-483d-8a71-3e277428e73d}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldWriteDwordBackedEnum : REFERENCE TO FB_Test
+VAR_INST
+    fbCtx : FB_WriteContext;
+END_VAR
+VAR
+    cExpectedBuffer : ARRAY[0..7] OF BYTE := [16#02];
+    eValue : E_Status := E_Status.STATUS_ERROR;
+    aActualBuffer : ARRAY[0..7] OF BYTE;
+    hrActual : HRESULT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+fbCtx.FromBuffer(aActualBuffer);
+
+hrActual := fbCtx.WriteEnum(anyEnum:= eValue);
+
+AssertEquals_DINT(
+    Expected:= S_OK,
+    Actual:= hrActual,
+    Message:= 'Expected S_OK when writing DWORD backed enum');
+
+AssertArrayEquals_BYTE(
+    Expecteds:= cExpectedBuffer,
+    Actuals:= aActualBuffer,
+    Message:= 'Expected DWORD backed enum to be written as value 2');
+
+AssertEquals_UDINT(
+    Expected:= 1,
+    Actual:= fbCtx.refCtx.stState.nBufferPos,
+    Message:= 'Expected write position after one-byte enum value');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ShouldWriteWordBackedEnumFromOwnStorageOnly" Id="{7c39fe3c-f871-46c4-a03a-a21a88ef7f85}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldWriteWordBackedEnumFromOwnStorageOnly : REFERENCE TO FB_Test
+VAR_INST
+    fbCtx : FB_WriteContext;
+END_VAR
+VAR
+    cExpectedBuffer : ARRAY[0..7] OF BYTE := [16#03];
+    aValues : ARRAY[0..1] OF E_Color := [
+        E_Color.COLOR_BLUE,
+        E_Color.COLOR_GREEN];
+    aActualBuffer : ARRAY[0..7] OF BYTE;
+    hrActual : HRESULT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+fbCtx.FromBuffer(aActualBuffer);
+
+hrActual := fbCtx.WriteEnum(anyEnum:= aValues[0]);
+
+AssertEquals_DINT(
+    Expected:= S_OK,
+    Actual:= hrActual,
+    Message:= 'Expected S_OK when writing WORD backed enum');
+
+AssertArrayEquals_BYTE(
+    Expecteds:= cExpectedBuffer,
+    Actuals:= aActualBuffer,
+    Message:= 'Expected WORD backed enum to be written as value 3 only');
+
+AssertEquals_UDINT(
+    Expected:= 1,
+    Actual:= fbCtx.refCtx.stState.nBufferPos,
+    Message:= 'Expected write position after one-byte enum value');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

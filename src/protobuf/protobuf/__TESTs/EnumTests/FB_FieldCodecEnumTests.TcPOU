@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_FieldCodecEnumTests" Id="{0c0c4bb2-6e54-4f2d-807d-0a42321b69ff}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL FINAL FB_FieldCodecEnumTests EXTENDS FB_TestSuite
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+    fbFieldCodec : FB_FieldCodecEnum(nTag:= 0);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ShouldCalculatePackedSizeFromEnumStorageOnly();
+ShouldWriteEnumValuesFromEnumStorageOnly();
+ShouldReadEnumValueForRepeatedFieldStorage();]]></ST>
+    </Implementation>
+    <Method Name="ShouldCalculatePackedSizeFromEnumStorageOnly" Id="{efb1fdd5-7ab7-454c-a64c-58f0cebdcbb6}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldCalculatePackedSizeFromEnumStorageOnly : REFERENCE TO FB_Test
+VAR
+    aValues : ARRAY[0..1] OF E_Color := [
+        E_Color.COLOR_BLUE,
+        E_Color.COLOR_GREEN];
+    nPackedDataSize : UDINT;
+    hrActual : HRESULT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+hrActual := fbFieldCodec.CalculatePackedDataSize(
+    anyFirstElem:= F_ToAnyType(aValues[0]),
+    nLength:= 2,
+    nPackedDataSize=> nPackedDataSize);
+
+AssertEquals_DINT(
+    Expected:= S_OK,
+    Actual:= hrActual,
+    Message:= 'Expected enum packed size calculation to succeed');
+
+AssertEquals_UDINT(
+    Expected:= 2,
+    Actual:= nPackedDataSize,
+    Message:= 'Expected packed size to use only the enum storage for each item');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ShouldReadEnumValueForRepeatedFieldStorage" Id="{c66c5bc8-7510-469e-8732-1144f9ef0c1d}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldReadEnumValueForRepeatedFieldStorage : REFERENCE TO FB_Test
+VAR_INST
+    fbCtx : FB_ParseContext;
+END_VAR
+VAR
+    cBuffer : ARRAY[0..7] OF BYTE := [16#03];
+    refCtx : REFERENCE TO ST_ParseContext;
+    anyOut : T_Any;
+    nActual : UDINT;
+    hrActual : HRESULT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+fbCtx.FromBuffer(cBuffer);
+refCtx REF= fbCtx.refCtx;
+
+hrActual := fbFieldCodec.ValueReader(stCtx:= refCtx, anyOut=> anyOut);
+IF SUCCEEDED(hrActual) THEN
+    MEMCPY(destAddr:= ADR(nActual), srcAddr:= anyOut.pValue, n:= MIN(TO_UDINT(anyOut.diSize), SIZEOF(nActual)));
+END_IF
+
+AssertEquals_DINT(
+    Expected:= S_OK,
+    Actual:= hrActual,
+    Message:= 'Expected enum codec reader to parse a varint enum value');
+
+AssertEquals_UDINT(
+    Expected:= 3,
+    Actual:= nActual,
+    Message:= 'Expected parsed enum value 3');
+
+AssertEquals_UDINT(
+    Expected:= 1,
+    Actual:= fbCtx.refCtx.stState.nBufferPos,
+    Message:= 'Expected read position after one-byte enum value');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ShouldWriteEnumValuesFromEnumStorageOnly" Id="{ab5b2ab9-0717-41aa-8e7d-01acf3e63df5}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldWriteEnumValuesFromEnumStorageOnly : REFERENCE TO FB_Test
+VAR_INST
+    fbCtx : FB_WriteContext;
+END_VAR
+VAR
+    cExpectedBuffer : ARRAY[0..7] OF BYTE := [16#03, 16#03, 16#02];
+    aDataTypes : ARRAY[0..1] OF E_DataType := [
+        E_DataType.DATA_TYPE_HUMIDITY,
+        E_DataType.DATA_TYPE_PRESSURE];
+    aColors : ARRAY[0..1] OF E_Color := [
+        E_Color.COLOR_BLUE,
+        E_Color.COLOR_GREEN];
+    eStatus : E_Status := E_Status.STATUS_ERROR;
+    aActualBuffer : ARRAY[0..7] OF BYTE;
+    refCtx : REFERENCE TO ST_WriteContext;
+    hrActual : HRESULT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+fbCtx.FromBuffer(aActualBuffer);
+refCtx REF= fbCtx.refCtx;
+
+hrActual := fbFieldCodec.ValueWriter(stCtx:= refCtx, anyIn:= F_ToAnyType(aDataTypes[0]));
+IF SUCCEEDED(hrActual) THEN
+    hrActual := fbFieldCodec.ValueWriter(stCtx:= refCtx, anyIn:= F_ToAnyType(aColors[0]));
+END_IF
+IF SUCCEEDED(hrActual) THEN
+    hrActual := fbFieldCodec.ValueWriter(stCtx:= refCtx, anyIn:= F_ToAnyType(eStatus));
+END_IF
+
+AssertEquals_DINT(
+    Expected:= S_OK,
+    Actual:= hrActual,
+    Message:= 'Expected enum codec writer to accept BYTE, WORD and DWORD backed enums');
+
+AssertArrayEquals_BYTE(
+    Expecteds:= cExpectedBuffer,
+    Actuals:= aActualBuffer,
+    Message:= 'Expected enum values to be written as value 3 without reading neighbour storage');
+
+AssertEquals_UDINT(
+    Expected:= 3,
+    Actual:= fbCtx.refCtx.stState.nBufferPos,
+    Message:= 'Expected write position after three one-byte enum values');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

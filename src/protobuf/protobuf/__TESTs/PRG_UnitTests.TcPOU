@@ -32,6 +32,7 @@ PRG_MessageTests();
 PRG_WireFormatTests();
 PRG_RepeatedFieldTests();
 PRG_HelperTests();
+PRG_EnumTests();
 PRG_SpanTests();
 TcUnit.RUN();
 

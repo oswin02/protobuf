@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_ReadEnumTests" Id="{4fa29012-325c-4e4d-aa42-fb16e4935380}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL FINAL FB_ReadEnumTests EXTENDS FB_TestSuite
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ShouldReadByteBackedEnumWithoutChangingNeighbourValues();
+ShouldReadWordBackedEnumWithoutChangingNeighbourValues();
+ShouldReadDwordBackedEnum();
+ShouldReturnInvalidDataForNonEnum();]]></ST>
+    </Implementation>
+    <Method Name="ShouldReadByteBackedEnumWithoutChangingNeighbourValues" Id="{ace1d77e-7d99-40af-8c32-0c5583d3d628}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldReadByteBackedEnumWithoutChangingNeighbourValues : REFERENCE TO FB_Test
+VAR_INST
+    fbCtx : FB_ParseContext;
+END_VAR
+VAR
+    cBuffer : ARRAY[0..7] OF BYTE := [16#03];
+    aValues : ARRAY[0..3] OF E_DataType := [
+        E_DataType.DATA_TYPE_UNKNOWN,
+        E_DataType.DATA_TYPE_TEMPERATURE,
+        E_DataType.DATA_TYPE_PRESSURE,
+        E_DataType.DATA_TYPE_HUMIDITY];
+    nActual : BYTE;
+    nNeighbour : BYTE;
+    hrActual : HRESULT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+fbCtx.FromBuffer(cBuffer);
+
+hrActual := fbCtx.ReadEnum(anyEnum:= aValues[0]);
+MEMCPY(destAddr:= ADR(nActual), srcAddr:= ADR(aValues[0]), n:= SIZEOF(nActual));
+MEMCPY(destAddr:= ADR(nNeighbour), srcAddr:= ADR(aValues[1]), n:= SIZEOF(nNeighbour));
+
+AssertEquals_DINT(
+    Expected:= S_OK,
+    Actual:= hrActual,
+    Message:= 'Expected S_OK when reading BYTE backed enum');
+
+AssertEquals_UDINT(
+    Expected:= 3,
+    Actual:= TO_UDINT(nActual),
+    Message:= 'Expected BYTE backed enum value 3');
+
+AssertEquals_UDINT(
+    Expected:= 1,
+    Actual:= TO_UDINT(nNeighbour),
+    Message:= 'Expected neighbouring BYTE backed enum value to stay unchanged');
+
+AssertEquals_UDINT(
+    Expected:= 1,
+    Actual:= fbCtx.refCtx.stState.nBufferPos,
+    Message:= 'Expected read position after one-byte enum value');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ShouldReadDwordBackedEnum" Id="{28c5fb4e-329c-4b83-a370-180e8da28dad}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldReadDwordBackedEnum : REFERENCE TO FB_Test
+VAR_INST
+    fbCtx : FB_ParseContext;
+END_VAR
+VAR
+    cBuffer : ARRAY[0..7] OF BYTE := [16#02];
+    eValue : E_Status := E_Status.STATUS_IDLE;
+    nActual : DWORD;
+    hrActual : HRESULT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+fbCtx.FromBuffer(cBuffer);
+
+hrActual := fbCtx.ReadEnum(anyEnum:= eValue);
+MEMCPY(destAddr:= ADR(nActual), srcAddr:= ADR(eValue), n:= SIZEOF(nActual));
+
+AssertEquals_DINT(
+    Expected:= S_OK,
+    Actual:= hrActual,
+    Message:= 'Expected S_OK when reading DWORD backed enum');
+
+AssertEquals_UDINT(
+    Expected:= 2,
+    Actual:= TO_UDINT(nActual),
+    Message:= 'Expected DWORD backed enum value 2');
+
+AssertEquals_UDINT(
+    Expected:= 1,
+    Actual:= fbCtx.refCtx.stState.nBufferPos,
+    Message:= 'Expected read position after one-byte enum value');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ShouldReadWordBackedEnumWithoutChangingNeighbourValues" Id="{1ed291ab-1ca5-4190-b7fe-9d24cbc8a651}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldReadWordBackedEnumWithoutChangingNeighbourValues : REFERENCE TO FB_Test
+VAR_INST
+    fbCtx : FB_ParseContext;
+END_VAR
+VAR
+    cBuffer : ARRAY[0..7] OF BYTE := [16#03];
+    aValues : ARRAY[0..1] OF E_Color := [
+        E_Color.COLOR_DEFAULT,
+        E_Color.COLOR_RED];
+    nActual : WORD;
+    nNeighbour : WORD;
+    hrActual : HRESULT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+fbCtx.FromBuffer(cBuffer);
+
+hrActual := fbCtx.ReadEnum(anyEnum:= aValues[0]);
+MEMCPY(destAddr:= ADR(nActual), srcAddr:= ADR(aValues[0]), n:= SIZEOF(nActual));
+MEMCPY(destAddr:= ADR(nNeighbour), srcAddr:= ADR(aValues[1]), n:= SIZEOF(nNeighbour));
+
+AssertEquals_DINT(
+    Expected:= S_OK,
+    Actual:= hrActual,
+    Message:= 'Expected S_OK when reading WORD backed enum');
+
+AssertEquals_UDINT(
+    Expected:= 3,
+    Actual:= TO_UDINT(nActual),
+    Message:= 'Expected WORD backed enum value 3');
+
+AssertEquals_UDINT(
+    Expected:= 1,
+    Actual:= TO_UDINT(nNeighbour),
+    Message:= 'Expected neighbouring WORD backed enum value to stay unchanged');
+
+AssertEquals_UDINT(
+    Expected:= 1,
+    Actual:= fbCtx.refCtx.stState.nBufferPos,
+    Message:= 'Expected read position after one-byte enum value');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ShouldReturnInvalidDataForNonEnum" Id="{dad8f56f-8220-4ebb-a39b-6da67904b31a}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldReturnInvalidDataForNonEnum : REFERENCE TO FB_Test
+VAR_INST
+    fbCtx : FB_ParseContext;
+END_VAR
+VAR
+    cBuffer : ARRAY[0..7] OF BYTE := [16#03];
+    nValue : UDINT;
+    hrExpected : HRESULT := E_HRESULTAdsErr.INVALIDDATA;
+    hrActual : HRESULT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+fbCtx.FromBuffer(cBuffer);
+
+hrActual := fbCtx.ReadEnum(anyEnum:= nValue);
+
+AssertEquals_DINT(
+    Expected:= hrExpected,
+    Actual:= hrActual,
+    Message:= 'Expected INVALIDDATA for non-enum input');
+
+AssertEquals_UDINT(
+    Expected:= 0,
+    Actual:= fbCtx.refCtx.stState.nBufferPos,
+    Message:= 'Expected read position to stay unchanged');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

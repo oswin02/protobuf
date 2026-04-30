@@ -7,12 +7,20 @@ VAR_INPUT
 END_VAR
 VAR
 	nTmp : DINT;
+	nCopySize : UDINT;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[IF anyEnum.pValue = NULL OR anyEnum.TypeClass <> __SYSTEM.TYPE_CLASS.TYPE_ENUM THEN
 	RETURN;
 END_IF
-nTmp := PDINT_TO_DINT(anyEnum.pValue);
+
+nCopySize := MIN(TO_UDINT(anyEnum.diSize), SIZEOF(nTmp));
+IF nCopySize = 0 THEN
+	RETURN;
+END_IF
+
+nTmp := 0;
+MEMCPY(destAddr:= ADR(nTmp), srcAddr:= anyEnum.pValue, n:= nCopySize);
 F_ComputeEnumSize := F_ComputeInt32Size(nTmp);]]></ST>
     </Implementation>
   </POU>

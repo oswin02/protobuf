@@ -130,6 +130,11 @@ END_VAR
 VAR_INPUT
     anyEnum : ANY;
 END_VAR
+VAR
+	nTmp : DINT;
+	nCopySize : UDINT;
+	retVal : UDINT;
+END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[IF anyEnum.pValue = NULL OR anyEnum.TypeClass <> __SYSTEM.TYPE_CLASS.TYPE_ENUM THEN
@@ -137,7 +142,20 @@ END_VAR
 	RETURN;
 END_IF
 
-WriteEnum := F_WriteEnum(THIS^.stCtx, PDINT_TO_DINT(anyEnum.pValue));]]></ST>
+nCopySize := MIN(TO_UDINT(anyEnum.diSize), SIZEOF(nTmp));
+IF nCopySize = 0 THEN
+	WriteEnum := E_HRESULTAdsErr.INVALIDDATA;
+	RETURN;
+END_IF
+
+nTmp := 0;
+retVal := MEMCPY(destAddr:= ADR(nTmp), srcAddr:= anyEnum.pValue, n:= nCopySize);
+IF retVal = 0 THEN
+	WriteEnum := E_HRESULTAdsErr.INVALIDDATA;
+	RETURN;
+END_IF
+
+WriteEnum := F_WriteEnum(THIS^.stCtx, nTmp);]]></ST>
       </Implementation>
     </Method>
     <Method Name="WriteFixed32" Id="{75c23fcd-723d-4cbc-9e77-8e2301b57ac1}">

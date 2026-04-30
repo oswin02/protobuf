@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="PRG_EnumTests" Id="{ac08c74c-0c17-44f7-bb66-c7967f28da8f}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'analysis' := '-33'}
+PROGRAM INTERNAL PRG_EnumTests
+VAR
+{IF defined (UNIT_TEST)}
+    fbComputeEnumSizeTests : FB_ComputeEnumSizeTests;
+    fbWriteEnumTests       : FB_WriteEnumTests;
+    fbReadEnumTests        : FB_ReadEnumTests;
+    fbFieldCodecEnumTests  : FB_FieldCodecEnumTests;
+{END_IF}
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
