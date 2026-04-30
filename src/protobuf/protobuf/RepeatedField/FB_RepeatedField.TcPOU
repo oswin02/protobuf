@@ -92,8 +92,15 @@ IF ipFieldCodecField.IsPackedRepeatedField(ipFieldCodecField.Tag) THEN
     RETURN;
 END_IF
 
-{warning 'TODO: Non packed repeated field'}
-nSize := 0;
+CalculateSize := CalculatePackedDataSize(nPackedDataSize=> nPackedSize);
+IF FAILED(CalculateSize) THEN
+	RETURN;
+END_IF
+
+nSize := (F_ComputeRawVarint32Size(ipFieldCodecField.Tag) * THIS^.nCountField) + nPackedSize;
+IF ipFieldCodecField.EndTag <> 0 THEN
+	nSize := nSize + (F_ComputeRawVarint32Size(ipFieldCodecField.EndTag) * THIS^.nCountField);
+END_IF
 
 ]]></ST>
       </Implementation>

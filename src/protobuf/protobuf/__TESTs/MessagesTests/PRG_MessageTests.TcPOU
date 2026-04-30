@@ -11,6 +11,8 @@ VAR
     fbExam : FB_ExampleMessage;
     
     fbRoundTripMessageExampleTest : FB_RoundTripMessageExampleTest;
+    fbReadMessageErrorTests : FB_ReadMessageErrorTests;
+    fbWriteMessageSizeTests : FB_WriteMessageSizeTests;
     {END_IF}
 END_VAR
 ]]></Declaration>

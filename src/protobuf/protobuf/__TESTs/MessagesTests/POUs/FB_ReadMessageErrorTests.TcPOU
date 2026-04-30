@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_ReadMessageErrorTests" Id="{e6e0292f-2ef7-4868-afbe-cdd55de89882}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL FINAL FB_ReadMessageErrorTests EXTENDS FB_TestSuite
+VAR
+    fbMessage : FB_TestFixed32Message;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ShouldPreserveRawMessageFailure();]]></ST>
+    </Implementation>
+    <Method Name="ShouldPreserveRawMessageFailure" Id="{95909ed1-5770-409e-bba4-49bf2686a107}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldPreserveRawMessageFailure : REFERENCE TO FB_Test
+VAR CONSTANT
+    cBuffer : ARRAY[0..1] OF BYTE := [16#01, 16#0D];
+END_VAR
+VAR_INST
+    fbCtx : FB_ParseContext;
+END_VAR
+VAR
+    hr : HRESULT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+fbCtx.FromBuffer(cBuffer);
+
+hr := F_ReadMessage(fbCtx:= fbCtx, iMessage:= fbMessage);
+
+AssertEquals_DINT(
+    Expected:= E_ParserErrorCode.TruncatedMessage,
+    Actual:= hr,
+    Message:= 'Expected F_ReadMessage to preserve the original raw message error');
+
+AssertEquals_DINT(
+    Expected:= E_ParserErrorCode.TruncatedMessage,
+    Actual:= fbCtx.refCtx.stState.eParserErrorCode,
+    Message:= 'Expected parser state to keep the original raw message error');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

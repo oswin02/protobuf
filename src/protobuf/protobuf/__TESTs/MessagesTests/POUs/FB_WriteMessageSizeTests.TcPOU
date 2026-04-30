@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_WriteMessageSizeTests" Id="{5f1a3f57-098c-476c-9c27-36898d63d38b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL FINAL FB_WriteMessageSizeTests EXTENDS FB_TestSuite
+VAR
+    fbMessage : FB_TestWrongSizeMessage;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ShouldWriteMeasuredMessageLength();
+ShouldComputeMessageSizeFromSerializedBytes();
+ShouldExposeBytesWritten();]]></ST>
+    </Implementation>
+    <Method Name="ShouldWriteMeasuredMessageLength" Id="{c0db5678-4e20-4b1e-9404-fc09f6e61b82}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldWriteMeasuredMessageLength : REFERENCE TO FB_Test
+VAR CONSTANT
+    cExpected : ARRAY[0..5] OF BYTE := [16#05, 16#0D, 16#78, 16#56, 16#34, 16#12];
+END_VAR
+VAR_INST
+    fbCtx : FB_WriteContext;
+END_VAR
+VAR
+    aActual : ARRAY[0..5] OF BYTE;
+    hr : HRESULT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+fbCtx.FromBuffer(aActual);
+
+hr := fbCtx.WriteMessage(ipMessage:= fbMessage);
+
+AssertEquals_DINT(
+    Expected:= S_OK,
+    Actual:= hr,
+    Message:= 'Expected embedded message write to succeed');
+
+AssertArrayEquals_BYTE(
+    Expecteds:= cExpected,
+    Actuals:= aActual,
+    Message:= 'Expected length prefix to use serialized byte count, not CalculateSize');
+
+AssertEquals_UDINT(
+    Expected:= 6,
+    Actual:= fbCtx.refCtx.stState.nBufferPos,
+    Message:= 'Expected writer position to include length and payload');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ShouldComputeMessageSizeFromSerializedBytes" Id="{6b910ae6-7fbd-43bc-953d-06234a1b9f86}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldComputeMessageSizeFromSerializedBytes : REFERENCE TO FB_Test
+VAR
+    nSize : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+nSize := F_ComputeMessageSize(iMessage:= fbMessage);
+
+AssertEquals_UDINT(
+    Expected:= 6,
+    Actual:= nSize,
+    Message:= 'Expected message size to be measured from serialized bytes');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ShouldExposeBytesWritten" Id="{4cf830b6-119b-4bb7-8e84-6db77909fddc}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldExposeBytesWritten : REFERENCE TO FB_Test
+VAR
+    aBuffer : ARRAY[0..4] OF BYTE;
+    hr : HRESULT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+hr := fbMessage.Writer.WriteTo(aBuffer);
+
+AssertEquals_DINT(
+    Expected:= S_OK,
+    Actual:= hr,
+    Message:= 'Expected raw message write to succeed');
+
+AssertEquals_UDINT(
+    Expected:= 5,
+    Actual:= fbMessage.Writer.nBytesWritten,
+    Message:= 'Expected writer to expose actual raw payload byte count');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

@@ -21,12 +21,15 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[IF ipRepeatedField.ipFieldCodec = 0 THEN
+      <ST><![CDATA[nLength := 0;
+
+IF ipRepeatedField.ipFieldCodec = 0 THEN
     F_ReadRepeatedField := F_ParseError(stCtx,  E_ParserErrorCode.InternalError);
     RETURN;
 END_IF
 
 IF ipRepeatedField.nCapcacity = 0 THEN
+    nLength := ipRepeatedField.nCount;
 	RETURN;
 END_IF
 
@@ -38,6 +41,7 @@ IF ipRepeatedField.ipFieldCodec.IsPackedRepeatedField(nLastTag) THEN
     IF FAILED(hr) OR nLength <= 0 THEN
         // Empty packed field, valid - ignore.
         F_ReadRepeatedField := hr;
+        nLength := ipRepeatedField.nCount;
         RETURN;
     END_IF 
     
@@ -81,7 +85,9 @@ ELSE
     UNTIL
         NOT bTagConsumed
     END_REPEAT
-END_IF]]></ST>
+END_IF
+
+nLength := ipRepeatedField.nCount;]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

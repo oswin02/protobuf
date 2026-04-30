@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1">
   <POU Name="F_WriteMessage" Id="{e4751bf1-1312-4dd2-881e-ae3463ea8207}" SpecialFunc="None">
-    <Declaration><![CDATA[// Writes a message, without a tag. The data is length-prefixed.
+    <Declaration><![CDATA[{attribute 'estimated-stack-usage' := '8192'}
+// Writes a message, without a tag. The data is length-prefixed.
 FUNCTION F_WriteMessage : HRESULT
 VAR_IN_OUT
 //     fbCtx   : FB_WriteContext;
@@ -11,7 +12,8 @@ VAR_INPUT
     ipMessage : I_Message;
 END_VAR
 VAR
-	nLength : UDINT;
+    nLength : UDINT;
+    aPayload : T_ProtobufRawBuffer;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[IF ipMessage = NULL THEN
@@ -19,13 +21,18 @@ END_VAR]]></Declaration>
 	RETURN;
 END_IF
 
-nLength := ipMessage.CalculateSize();
-F_WriteMessage := F_WriteLength(stCtx:= stCtx, nLength);
+F_WriteMessage := ipMessage.Writer.WriteTo(aPayload);
 IF FAILED(F_WriteMessage) THEN
 	RETURN;
 END_IF
 
-F_WriteMessage := F_WriteRawMessage(stCtx, ipMessage);]]></ST>
+nLength := ipMessage.Writer.nBytesWritten;
+F_WriteMessage := F_WriteLength(stCtx:= stCtx, nLength:= nLength);
+IF FAILED(F_WriteMessage) THEN
+	RETURN;
+END_IF
+
+F_WriteMessage := F_WriteRawBytes(stCtx:= stCtx, tBytes:= F_ToAnyBytes(aPayload), nLength:= nLength);]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

@@ -9,6 +9,7 @@ END_VAR
 VAR
     fbWriteCtx  : FB_WriteContext;
     ipMessage   : I_Message;
+    nBytesWrittenField : UDINT;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -29,6 +30,17 @@ END_VAR]]></Declaration>
         <ST><![CDATA[THIS^.ipMessage := ipMessage;]]></ST>
       </Implementation>
     </Method>
+    <Property Name="nBytesWritten" Id="{bc4e670a-1333-4011-aed3-20660f204a04}">
+      <Declaration><![CDATA[PROPERTY nBytesWritten : UDINT]]></Declaration>
+      <Get Name="Get" Id="{088cbf0f-6b87-473b-8410-2f1be2628117}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[nBytesWritten := THIS^.nBytesWrittenField;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="WriteTo" Id="{721f4c0c-dcec-4498-ad06-eeae5ba3bc2f}">
       <Declaration><![CDATA[METHOD PUBLIC WriteTo : HRESULT
 VAR_IN_OUT CONSTANT
@@ -37,6 +49,8 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[
+nBytesWrittenField := 0;
+
 IF ipMessage = 0 THEN
     WriteTo := E_WriterErrorCode.InternalError;
     RETURN;
@@ -47,7 +61,10 @@ IF FAILED(WriteTo) THEN
     RETURN;
 END_IF
 
-WriteTo := ipMessage.WriteTo(fbWriteCtx:= fbWriteCtx);]]></ST>
+WriteTo := ipMessage.WriteTo(fbWriteCtx:= fbWriteCtx);
+IF SUCCEEDED(WriteTo) THEN
+    nBytesWrittenField := fbWriteCtx.refCtx.stState.nBufferPos;
+END_IF]]></ST>
       </Implementation>
     </Method>
   </POU>

@@ -625,6 +625,15 @@
     <Compile Include="__TESTs\MessagesTests\POUs\FB_RoundTripMessageExampleTest.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="__TESTs\MessagesTests\POUs\FB_ReadMessageErrorTests.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="__TESTs\MessagesTests\POUs\FB_TestWrongSizeMessage.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="__TESTs\MessagesTests\POUs\FB_WriteMessageSizeTests.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="__TESTs\MessagesTests\POUs\FooBarBaz\FB_BarMessage.TcPOU">
       <SubType>Code</SubType>
     </Compile>
@@ -676,6 +685,9 @@
     <Compile Include="__TESTs\RepeatedFieldTests\PRG_RepeatedFieldTests.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="__TESTs\RepeatedFieldTests\FB_TestFixed32Message.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="__TESTs\RepeatedFieldTests\Read\FB_ReadRepeatedFieldBoolTests.TcPOU">
       <SubType>Code</SubType>
     </Compile>
@@ -692,6 +704,10 @@
       <ExcludeFromBuild>false</ExcludeFromBuild>
     </Compile>
     <Compile Include="__TESTs\RepeatedFieldTests\Read\FB_ReadRepeatedFieldStringTests.TcPOU">
+      <SubType>Code</SubType>
+      <ExcludeFromBuild>false</ExcludeFromBuild>
+    </Compile>
+    <Compile Include="__TESTs\RepeatedFieldTests\Read\FB_ReadRepeatedFieldMessageTests.TcPOU">
       <SubType>Code</SubType>
       <ExcludeFromBuild>false</ExcludeFromBuild>
     </Compile>

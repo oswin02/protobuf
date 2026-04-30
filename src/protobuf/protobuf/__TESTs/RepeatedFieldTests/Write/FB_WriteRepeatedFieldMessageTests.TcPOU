@@ -1,38 +1,65 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1">
   <POU Name="FB_WriteRepeatedFieldMessageTests" Id="{89bc8e78-f313-44c0-ab2f-dd749b8a02dd}" SpecialFunc="None">
-    <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL FB_WriteRepeatedFieldMessageTests EXTENDS FB_TestSuite
+    <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL FINAL FB_WriteRepeatedFieldMessageTests EXTENDS FB_TestSuite
 VAR
-	fbWriteCtx		: FB_WriteContext;
-	fbFoo   		: FB_FooMessage;
-	stFoo           : ST_Foo;
-	aBuffer 		: ARRAY[0..255] OF BYTE;
+    aValues : ARRAY[0..2] OF UDINT := [42, 6969, 1337];
+    fbMessage : FB_TestFixed32Message;
+    fbFieldCodec : FB_FieldCodecMessage(nTag:= 16#0A, ipMessage:= fbMessage);
+    fbRepeatedField : FB_RepeatedField(anyArray:= F_ToAnyType(aValues), anyFirstElem:= F_ToAnyType(aValues[0]));
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[TEST(__POUNAME());
+      <ST><![CDATA[ShouldWriteNonPackedMessagesAndCalculateSize();]]></ST>
+    </Implementation>
+    <Method Name="ShouldWriteNonPackedMessagesAndCalculateSize" Id="{68472a16-98fd-49e5-956d-f27987d6401f}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldWriteNonPackedMessagesAndCalculateSize : REFERENCE TO FB_Test
+VAR CONSTANT
+    cExpected : ARRAY[0..20] OF BYTE := [
+        16#0A, 16#05, 16#0D, 16#2A, 16#00, 16#00, 16#00,
+        16#0A, 16#05, 16#0D, 16#39, 16#1B, 16#00, 16#00,
+        16#0A, 16#05, 16#0D, 16#39, 16#05, 16#00, 16#00];
+END_VAR
+VAR_INST
+    fbCtx : FB_WriteContext;
+END_VAR
+VAR
+    aActual : ARRAY[0..20] OF BYTE;
+    hr : HRESULT;
+    hrSize : HRESULT;
+    nSize : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
 
+fbRepeatedField.InitializeFromArray(anyArray:= F_ToAnyType(aValues), anyFirstElem:= F_ToAnyType(aValues[0]), nCount:= 3);
+fbCtx.FromBuffer(aActual);
 
-// Arrange
-fbWriteCtx.FromBuffer(aBuffer);
-stFoo.baz[0].value:= 42;
-stFoo.baz[0].name:= 'foo';
-stFoo.baz[1].value:= 6969;
-stFoo.baz[1].name:= 'bar';
-stFoo.baz[2].value:= 1337;
-stFoo.baz[2].name:= 'baz';
-F_SetMessageValue(F_ToAnyType(stFoo), fbFoo);
+hr := fbRepeatedField.WriteToWithCount(fbWriteCtx:= fbCtx, ipFieldCodec:= fbFieldCodec, nCount:= 3);
+hrSize := fbRepeatedField.CalculateSize(nSize=> nSize);
 
-// Act 
-fbFoo.WriteTo(fbWriteCtx);
+AssertEquals_DINT(
+    Expected:= S_OK,
+    Actual:= hr,
+    Message:= 'Expected repeated message write to succeed');
 
+AssertArrayEquals_BYTE(
+    Expecteds:= cExpected,
+    Actuals:= aActual,
+    Message:= 'Expected non-packed repeated message wire format');
 
+AssertEquals_DINT(
+    Expected:= S_OK,
+    Actual:= hrSize,
+    Message:= 'Expected repeated message size calculation to succeed');
 
-// Assert
-
-
+AssertEquals_UDINT(
+    Expected:= 21,
+    Actual:= nSize,
+    Message:= 'Expected non-packed repeated message size to include tags and message lengths');
 
 TEST_FINISHED_NAMED(__POUNAME());]]></ST>
-    </Implementation>
+      </Implementation>
+    </Method>
   </POU>
 </TcPlcObject>

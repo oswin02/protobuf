@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_ReadRepeatedFieldMessageTests" Id="{024aaf04-75a4-4a59-88ac-6cbf8a17a75d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL FINAL FB_ReadRepeatedFieldMessageTests EXTENDS FB_TestSuite
+VAR
+    aActual : ARRAY[0..2] OF UDINT;
+    fbMessage : FB_TestFixed32Message;
+    fbFieldCodec : FB_FieldCodecMessage(nTag:= 16#0A, ipMessage:= fbMessage);
+    fbRepeatedField : FB_RepeatedField(anyArray:= F_ToAnyType(aActual), anyFirstElem:= F_ToAnyType(aActual[0]));
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ShouldReadNonPackedMessagesAndReturnItemCount();]]></ST>
+    </Implementation>
+    <Method Name="ShouldReadNonPackedMessagesAndReturnItemCount" Id="{a16906c3-8fee-4f09-bf3f-da06650394cf}">
+      <Declaration><![CDATA[METHOD PRIVATE ShouldReadNonPackedMessagesAndReturnItemCount : REFERENCE TO FB_Test
+VAR CONSTANT
+    cBuffer : ARRAY[0..20] OF BYTE := [
+        16#0A, 16#05, 16#0D, 16#2A, 16#00, 16#00, 16#00,
+        16#0A, 16#05, 16#0D, 16#39, 16#1B, 16#00, 16#00,
+        16#0A, 16#05, 16#0D, 16#39, 16#05, 16#00, 16#00];
+    cExpected : ARRAY[0..2] OF UDINT := [42, 6969, 1337];
+END_VAR
+VAR_INST
+    fbCtx : FB_ParseContext;
+END_VAR
+VAR
+    hr : HRESULT;
+    nTag : UDINT;
+    nActualCount : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TEST(__POUNAME());
+
+fbRepeatedField.Initialize();
+MEMSET(destAddr:= ADR(aActual), fillByte:= 16#0, n:= SIZEOF(aActual));
+fbCtx.FromBuffer(cBuffer);
+
+F_ParseTag(fbCtx.refCtx, nTag=> nTag);
+hr := fbRepeatedField.AddEntriesFrom(fbParseCtx:= fbCtx, ipFieldCodec:= fbFieldCodec, nCount=> nActualCount);
+
+AssertEquals_DINT(
+    Expected:= S_OK,
+    Actual:= hr,
+    Message:= 'Expected repeated message read to succeed');
+
+AssertArrayEquals_UDINT(
+    Expecteds:= cExpected,
+    Actuals:= aActual,
+    Message:= 'Expected all message values to be copied into repeated storage');
+
+AssertEquals_UDINT(
+    Expected:= 3,
+    Actual:= nActualCount,
+    Message:= 'Expected AddEntriesFrom to return the total item count');
+
+AssertEquals_UDINT(
+    Expected:= 21,
+    Actual:= fbCtx.refCtx.stState.nBufferPos,
+    Message:= 'Expected parser to consume all repeated messages');
+
+TEST_FINISHED_NAMED(__POUNAME());]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

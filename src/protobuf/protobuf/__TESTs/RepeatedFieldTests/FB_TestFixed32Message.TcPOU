@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_TestFixed32Message" Id="{88505a11-3a8b-4d3a-86c7-667689b26c36}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL FINAL FB_TestFixed32Message IMPLEMENTS I_Message
+VAR
+    fbMessageParser : FB_MessageParser(ipMessage:= THIS^);
+    fbMessageWriter : FB_MessageWriter(ipMessage:= THIS^);
+    nValue : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="CalculateSize" Id="{b385b862-57ca-4a13-81af-1fdb807a2199}">
+      <Declaration><![CDATA[METHOD CalculateSize : UDINT
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CalculateSize := F_ComputeTagSize(1) + SIZEOF(nValue);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MergeFrom" Id="{913f0298-d0f1-434f-931d-6f2eb2a1f843}">
+      <Declaration><![CDATA[METHOD MergeFrom : HRESULT
+VAR_IN_OUT
+    fbParseCtx : FB_ParseContext;
+END_VAR
+VAR
+    nTag : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[REPEAT
+MergeFrom := fbParseCtx.ReadTag(nTag=> nTag);
+IF SUCCEEDED(MergeFrom) AND nTag = 0 THEN
+    EXIT;
+END_IF
+
+IF FAILED(MergeFrom) THEN
+    RETURN;
+END_IF
+
+CASE nTag OF
+    16#0D:
+        MergeFrom := fbParseCtx.ReadFixed32(nValue=> nValue);
+ELSE
+    MergeFrom := fbParseCtx.SkipLastField();
+END_CASE
+UNTIL FAILED(MergeFrom) OR nTag = 0
+END_REPEAT]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="MessageValue" Id="{12079bee-53ff-4ec9-863c-dfe11761c510}">
+      <Declaration><![CDATA[PROPERTY MessageValue : T_Any]]></Declaration>
+      <Get Name="Get" Id="{04919680-96df-41dc-ac89-25ff2c4dde1b}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[MessageValue := F_ToAnyType(anyArg:= nValue);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="Parser" Id="{d6b0d26a-48f6-4e94-8643-52afe2fcb7a4}">
+      <Declaration><![CDATA[PROPERTY Parser : REFERENCE TO FB_MessageParser]]></Declaration>
+      <Get Name="Get" Id="{f7504f09-5125-4e78-898b-a961d7e3383f}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Parser REF= fbMessageParser;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="Writer" Id="{2df17427-080e-4e2c-a02b-2f2d7dfb8254}">
+      <Declaration><![CDATA[PROPERTY Writer : REFERENCE TO FB_MessageWriter]]></Declaration>
+      <Get Name="Get" Id="{03e5638e-9d70-4165-8af2-0a6cfc1fd60c}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Writer REF= fbMessageWriter;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="WriteTo" Id="{842e8dd1-ccfb-42bc-9bbf-b4ebf860310f}">
+      <Declaration><![CDATA[METHOD WriteTo : HRESULT
+VAR_IN_OUT
+    fbWriteCtx : FB_WriteContext;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[WriteTo := fbWriteCtx.WriteTag(1, E_WireType.Fixed32);
+IF FAILED(WriteTo) THEN
+    RETURN;
+END_IF
+
+WriteTo := fbWriteCtx.WriteFixed32(nValue);]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

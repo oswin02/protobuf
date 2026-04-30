@@ -21,10 +21,39 @@ VAR_INPUT CONSTANT
 END_VAR
 VAR_OUTPUT
     nPackedDataSize : UDINT;
+END_VAR
+VAR
+    anyItem : T_Any;
+    i : UDINT;
+    eErrorCode : E_WriterErrorCode;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[
-CalculatePackedDataSize := 0;]]></ST>
+        <ST><![CDATA[nPackedDataSize := 0;
+
+IF THIS^.ipMessageField = NULL THEN
+    CalculatePackedDataSize := E_HRESULTAdsErr.INVALIDDATA;
+    RETURN;
+END_IF
+
+IF nLength < 1 THEN
+    CalculatePackedDataSize := S_OK;
+    RETURN;
+END_IF
+
+anyItem := anyFirstElem;
+
+FOR i := 0 TO nLength - 1 DO
+    anyItem.pValue := anyFirstElem.pValue + (i * TO_UDINT(anyFirstElem.diSize));
+    eErrorCode := F_SetMessageValue(anyValue:= anyItem, iMessage:= THIS^.ipMessageField);
+    IF FAILED(eErrorCode) THEN
+        CalculatePackedDataSize := E_HRESULTAdsErr.INVALIDDATA;
+        RETURN;
+    END_IF
+
+    nPackedDataSize := nPackedDataSize + F_ComputeMessageSize(iMessage:= THIS^.ipMessageField);
+END_FOR
+
+CalculatePackedDataSize := S_OK;]]></ST>
       </Implementation>
     </Method>
     <Method Name="FB_Init" Id="{f867bdfb-12c8-48a6-b5a1-7d0c3441f26d}">
